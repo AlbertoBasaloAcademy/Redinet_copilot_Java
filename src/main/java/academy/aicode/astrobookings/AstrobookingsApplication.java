@@ -7,6 +7,10 @@ import com.sun.net.httpserver.HttpServer;
 
 import academy.aicode.astrobookings.presentation.RocketHandler;
 
+/**
+ * Punto de entrada de la aplicación. Arranca un servidor HTTP embebido en el
+ * puerto 8080 y registra el contexto `/rockets`.
+ */
 public class AstrobookingsApplication {
 
   public static void main(String[] args) throws IOException {

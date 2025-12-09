@@ -1,5 +1,9 @@
 package academy.aicode.astrobookings.persistence.models;
 
+/**
+ * Modelo simple que representa un cohete (Rocket) usado por la aplicación.
+ * Contiene campos básicos: `id`, `name`, `capacity` y `speed`.
+ */
 public class Rocket {
   private String id;
   private String name;

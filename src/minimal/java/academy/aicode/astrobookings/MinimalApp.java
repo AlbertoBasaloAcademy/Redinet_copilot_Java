@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+/**
+ * Aplicación de ejemplo mínima para demostrar la serialización de un objeto
+ * `Rocket` con Jackson.
+ */
 public class MinimalApp {
   public static void main(String[] args) throws Exception {
     ObjectMapper mapper = new ObjectMapper();

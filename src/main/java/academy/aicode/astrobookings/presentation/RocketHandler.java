@@ -9,6 +9,10 @@ import com.sun.net.httpserver.HttpExchange;
 import academy.aicode.astrobookings.persistence.RocketRepository;
 import academy.aicode.astrobookings.persistence.models.Rocket;
 
+/**
+ * Handler HTTP para el recurso `/rockets`.
+ * Acepta únicamente peticiones POST que contienen el JSON de un {@link Rocket}.
+ */
 public class RocketHandler extends BaseHandler {
 
   private final RocketRepository rocketRepository = new RocketRepository();
@@ -24,6 +28,10 @@ public class RocketHandler extends BaseHandler {
     }
   }
 
+  /**
+   * Maneja la creación de un Rocket leyendo el body JSON, validando y
+   * guardando en el repositorio en memoria.
+   */
   private void handlePost(HttpExchange exchange) throws IOException {
     String response = "";
     int statusCode = 200;
@@ -52,6 +60,11 @@ public class RocketHandler extends BaseHandler {
     sendResponse(exchange, statusCode, response);
   }
 
+  /**
+   * Validaciones simples de negocio y entrada.
+   * 
+   * @return mensaje de error si no pasa validación, o null si es válido.
+   */
   private String validateRocket(Rocket rocket) {
     if (rocket.getName() == null || rocket.getName().trim().isEmpty()) {
       return "Rocket name must be provided";
