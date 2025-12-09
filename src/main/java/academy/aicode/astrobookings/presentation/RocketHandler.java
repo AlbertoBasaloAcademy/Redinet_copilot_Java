@@ -27,6 +27,8 @@ public class RocketHandler extends BaseHandler {
       handlePost(exchange);
     } else if ("GET".equals(method)) {
       handleGet(exchange);
+    } else if ("PUT".equals(method)) {
+      handlePut(exchange);
     } else {
       this.handleMethodNotAllowed(exchange);
     }
@@ -95,6 +97,54 @@ public class RocketHandler extends BaseHandler {
       } catch (IllegalArgumentException iae) {
         statusCode = 400;
         response = "{\"error\": \"" + iae.getMessage() + "\"}";
+      }
+    } catch (Exception e) {
+      statusCode = 400;
+      response = "{\"error\": \"Invalid JSON or request\"}";
+    }
+
+    sendResponse(exchange, statusCode, response);
+  }
+
+  /**
+   * Maneja la actualización de un Rocket: `PUT /rockets/{id}`.
+   * El body contiene un JSON con los campos a actualizar (name, capacity, speed).
+   */
+  private void handlePut(HttpExchange exchange) throws IOException {
+    String response = "";
+    int statusCode = 200;
+
+    try {
+      URI uri = exchange.getRequestURI();
+      String path = uri.getPath();
+      String context = exchange.getHttpContext().getPath(); // "/rockets"
+      String relative = "";
+      if (path.length() > context.length()) {
+        relative = path.substring(context.length()); // should be like "/{id}"
+      }
+
+      if (relative == null || relative.isEmpty() || "/".equals(relative)) {
+        statusCode = 400;
+        response = "{\"error\": \"Rocket id must be provided in path\"}";
+      } else {
+        String id = relative.startsWith("/") ? relative.substring(1) : relative;
+
+        InputStream is = exchange.getRequestBody();
+        String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        Rocket updates = this.objectMapper.readValue(body, Rocket.class);
+        try {
+          Rocket updated = rocketService.update(id, updates);
+          if (updated == null) {
+            statusCode = 404;
+            response = "{\"error\": \"Rocket not found\"}";
+          } else {
+            statusCode = 200;
+            response = this.objectMapper.writeValueAsString(updated);
+          }
+        } catch (IllegalArgumentException iae) {
+          statusCode = 400;
+          response = "{\"error\": \"" + iae.getMessage() + "\"}";
+        }
       }
     } catch (Exception e) {
       statusCode = 400;

@@ -7,13 +7,13 @@ package academy.aicode.astrobookings.persistence.models;
 public class Rocket {
   private String id;
   private String name;
-  private int capacity;
+  private Integer capacity;
   private Double speed;
 
   public Rocket() {
   }
 
-  public Rocket(String id, String name, int capacity, Double speed) {
+  public Rocket(String id, String name, Integer capacity, Double speed) {
     this.id = id;
     this.name = name;
     this.capacity = capacity;
@@ -36,11 +36,11 @@ public class Rocket {
     this.name = name;
   }
 
-  public int getCapacity() {
+  public Integer getCapacity() {
     return capacity;
   }
 
-  public void setCapacity(int capacity) {
+  public void setCapacity(Integer capacity) {
     this.capacity = capacity;
   }
 
