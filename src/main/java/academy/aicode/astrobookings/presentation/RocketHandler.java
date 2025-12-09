@@ -2,7 +2,9 @@ package academy.aicode.astrobookings.presentation;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import com.sun.net.httpserver.HttpExchange;
 
@@ -23,9 +25,54 @@ public class RocketHandler extends BaseHandler {
 
     if ("POST".equals(method)) {
       handlePost(exchange);
+    } else if ("GET".equals(method)) {
+      handleGet(exchange);
     } else {
       this.handleMethodNotAllowed(exchange);
     }
+  }
+
+  /**
+   * Maneja peticiones GET sobre `/rockets`.
+   * - `GET /rockets` -> devuelve todos los cohetes
+   * - `GET /rockets/{id}` -> devuelve el cohete por id o 404
+   */
+  private void handleGet(HttpExchange exchange) throws IOException {
+    String response = "";
+    int statusCode = 200;
+
+    try {
+      URI uri = exchange.getRequestURI();
+      String path = uri.getPath();
+      String context = exchange.getHttpContext().getPath(); // "/rockets"
+      String relative = "";
+      if (path.length() > context.length()) {
+        relative = path.substring(context.length()); // could be "" or "/{id}"
+      }
+
+      if (relative == null || relative.isEmpty() || "/".equals(relative)) {
+        // return all
+        List<Rocket> all = rocketRepository.findAll();
+        response = this.objectMapper.writeValueAsString(all);
+        statusCode = 200;
+      } else {
+        // remove leading '/'
+        String id = relative.startsWith("/") ? relative.substring(1) : relative;
+        Rocket r = rocketRepository.findById(id);
+        if (r == null) {
+          statusCode = 404;
+          response = "{\"error\": \"Rocket not found\"}";
+        } else {
+          response = this.objectMapper.writeValueAsString(r);
+          statusCode = 200;
+        }
+      }
+    } catch (Exception e) {
+      statusCode = 400;
+      response = "{\"error\": \"Invalid request\"}";
+    }
+
+    sendResponse(exchange, statusCode, response);
   }
 
   /**

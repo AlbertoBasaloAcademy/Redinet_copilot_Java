@@ -26,4 +26,18 @@ public class RocketRepository {
     rockets.put(rocket.getId(), rocket);
     return rocket;
   }
+
+  /**
+   * Devuelve todos los cohetes almacenados.
+   */
+  public java.util.List<Rocket> findAll() {
+    return new java.util.ArrayList<>(rockets.values());
+  }
+
+  /**
+   * Busca un Rocket por su id. Devuelve null si no existe.
+   */
+  public Rocket findById(String id) {
+    return rockets.get(id);
+  }
 }
