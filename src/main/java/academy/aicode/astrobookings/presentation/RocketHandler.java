@@ -8,7 +8,7 @@ import java.util.List;
 
 import com.sun.net.httpserver.HttpExchange;
 
-import academy.aicode.astrobookings.persistence.RocketRepository;
+import academy.aicode.astrobookings.business.RocketService;
 import academy.aicode.astrobookings.persistence.models.Rocket;
 
 /**
@@ -17,7 +17,7 @@ import academy.aicode.astrobookings.persistence.models.Rocket;
  */
 public class RocketHandler extends BaseHandler {
 
-  private final RocketRepository rocketRepository = new RocketRepository();
+  private final RocketService rocketService = new RocketService();
 
   @Override
   public void handle(HttpExchange exchange) throws IOException {
@@ -52,13 +52,13 @@ public class RocketHandler extends BaseHandler {
 
       if (relative == null || relative.isEmpty() || "/".equals(relative)) {
         // return all
-        List<Rocket> all = rocketRepository.findAll();
+        List<Rocket> all = rocketService.findAll();
         response = this.objectMapper.writeValueAsString(all);
         statusCode = 200;
       } else {
         // remove leading '/'
         String id = relative.startsWith("/") ? relative.substring(1) : relative;
-        Rocket r = rocketRepository.findById(id);
+        Rocket r = rocketService.findById(id);
         if (r == null) {
           statusCode = 404;
           response = "{\"error\": \"Rocket not found\"}";
@@ -88,16 +88,13 @@ public class RocketHandler extends BaseHandler {
       InputStream is = exchange.getRequestBody();
       String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
       Rocket rocket = this.objectMapper.readValue(body, Rocket.class);
-
-      // Business validations mixed with input validation
-      String error = validateRocket(rocket);
-      if (error != null) {
-        statusCode = 400;
-        response = "{\"error\": \"" + error + "\"}";
-      } else {
-        Rocket saved = rocketRepository.save(rocket);
+      try {
+        Rocket saved = rocketService.create(rocket);
         statusCode = 201;
         response = this.objectMapper.writeValueAsString(saved);
+      } catch (IllegalArgumentException iae) {
+        statusCode = 400;
+        response = "{\"error\": \"" + iae.getMessage() + "\"}";
       }
     } catch (Exception e) {
       statusCode = 400;
@@ -112,15 +109,6 @@ public class RocketHandler extends BaseHandler {
    * 
    * @return mensaje de error si no pasa validación, o null si es válido.
    */
-  private String validateRocket(Rocket rocket) {
-    if (rocket.getName() == null || rocket.getName().trim().isEmpty()) {
-      return "Rocket name must be provided";
-    }
-    if (rocket.getCapacity() <= 0 || rocket.getCapacity() > 10) {
-      return "Rocket capacity must be between 1 and 10";
-    }
-    // Speed is optional, no validation
-    return null;
-  }
+  // Validation moved to business layer (RocketService)
 
 }
