@@ -1,5 +1,6 @@
-# Redinet_copilot_Java
-Edición Java del curso de Copilot
+# Redinet Copilot Java
+
+Capacitación VSCode Copilot para programadores en Java
 
 
 ## Workflow de desarrollo y ejecución
@@ -16,3 +17,9 @@ java -jar target/astrobookings-1.0-SNAPSHOT.jar
 
 # Server: http://localhost:8080
 ```
+
+---
+
+- Author: [Alberto Basalo](https://albertobasalo.dev)
+- Academy: [Academy Organization](https://aicode.academy)
+- Laboratory: [Source Repository](https://github.com/AlbertoBasaloAcademy/Redinet_copilot_Java)
