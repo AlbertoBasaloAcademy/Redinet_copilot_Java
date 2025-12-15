@@ -1,82 +1,100 @@
-# Astrobookings — Documentación y Estructura
+# AstroBookings STRUCTURE
 
-Este documento explica cómo entender, compilar y ejecutar la solución ligera `astrobookings` y describe la estructura de carpetas del proyecto.
+Structure Document for AstroBookings
 
-**Resumen de la solución**
-- Aplicación Java que expone un servidor HTTP embebido (`com.sun.net.httpserver.HttpServer`) en el puerto `8080`.
-- Maneja el recurso `/rockets` con operaciones de creación y consulta en memoria.
-- Incluye un ejemplo mínimo (`MinimalApp`) para demostrar la serialización con Jackson.
+## Overview
 
-**Pasos para compilar y ejecutar (bash / Windows WSL / Git Bash)**
-- Compilar:
+**AstroBookings** is a layered (n-tier) architecture, designed for maintainability, separation of concerns, and educational clarity, using Java with native JDK HTTP server for minimal dependencies and in-memory data management.
 
-```bash
-./mvnw -DskipTests clean package
+## Architecture
+
+The system follows a classic layered architecture with clear separation of concerns:
+
+- **Presentation Layer**: HTTP handlers using JDK's built-in HTTP server for REST endpoints.
+- **Business Layer**: Service classes containing business logic, validation, and orchestration.
+- **Persistence Layer**: In-memory repositories using Java collections for data storage.
+
+Key principles:
+- Clear separation of concerns between layers.
+- Minimal dependencies (only Jackson for JSON, JUnit for testing).
+- No Spring Boot, database, or security (for demo/training purposes).
+- All state and logic are managed in-memory using Java collections.
+- Simulated external integrations (logs for notifications/payments).
+
+### Folder Structure
+
+Main folders and their purposes:
+
+```
+src/main/java/academy/aicode/astrobookings/
+├── AstrobookingsApplication.java    # Main entry point, HTTP server setup
+├── presentation/                    # HTTP handlers for REST endpoints
+│   ├── BaseHandler.java            # Common handler functionality
+│   ├── RocketHandler.java          # Rocket CRUD operations
+│   ├── FlightHandler.java          # Flight management (to be implemented)
+│   └── BookingHandler.java         # Booking operations (to be implemented)
+├── business/                        # Business logic and validation
+│   ├── RocketService.java          # Rocket business operations
+│   ├── FlightService.java          # Flight state management (to be implemented)
+│   └── BookingService.java         # Booking logic with discounts (to be implemented)
+└── persistence/                     # Data access layer
+    ├── RocketRepository.java       # In-memory rocket storage
+    ├── FlightRepository.java       # In-memory flight storage (to be implemented)
+    ├── BookingRepository.java      # In-memory booking storage (to be implemented)
+    └── models/                      # Domain entities
+        ├── Rocket.java             # Rocket entity
+        ├── Flight.java             # Flight entity (to be implemented)
+        └── Booking.java            # Booking entity (to be implemented)
 ```
 
-- Ejecutar usando el plugin `exec` de Maven (la `mainClass` está configurada en el `pom.xml`):
+### Components diagram
 
-```bash
-./mvnw exec:java
+```mermaid
+flowchart TD
+    Customer["Customer<br/>User who books space flights"]
+    
+    subgraph API["AstroBookings API"]
+        Handlers["HTTP Handlers<br/>JDK HTTP Server<br/>Handle REST requests"]
+        Services["Business Services<br/>Java<br/>Business logic and validation"]
+        Repos["Repositories<br/>Java Collections<br/>In-memory data storage"]
+    end
+    
+    Logs["Log Files<br/>System Logs<br/>Simulated notifications and payments"]
+    
+    Customer --> Handlers
+    Handlers --> Services
+    Services --> Repos
+    Services --> Logs
 ```
 
-- Alternativa: ejecutar la clase compilada directamente (después de `package`):
+## Development
+
+### Technical Stack 
+
+- **Java 21**: Core programming language
+- **JDK HTTP Server**: Built-in web server (no Spring Boot)
+- **Jackson 2.15.2**: JSON serialization/deserialization
+- **JUnit 5.10.0**: Unit testing framework
+- **Maven**: Build and dependency management
+- **Java Collections**: In-memory data storage
+- **System Logging**: Simulated external integrations
+
+### Development Workflow
 
 ```bash
-java -cp target/classes:$(echo ~/.m2/repository/com/fasterxml/jackson/*/*.jar | tr ' ' ':') academy.aicode.astrobookings.AstrobookingsApplication
+# Build and run
+mvn clean compile
+mvn exec:java -Dexec.mainClass="academy.aicode.astrobookings.AstrobookingsApplication"
+
+# Testing
+mvn test
+
+# Development guidelines
+- Feature branches from main
+- Code reviews for all changes
+- Manual testing with HTTP client (Postman, curl)
+- No CI/CD required (training environment)
+- Documentation updates in /docs
 ```
 
-Nota: el `pom.xml` ya apunta a `academy.aicode.astrobookings.AstrobookingsApplication` como `mainClass` para los plugins `exec`, `jar` y `shade`.
-
-**Endpoints**
-- `POST /rockets` — crea un `Rocket` a partir de un JSON en el body.
-  - Request Content-Type: `application/json`
-  - Respuestas:
-    - `201 Created` con el JSON del cohete guardado cuando la creación es válida.
-    - `400 Bad Request` si el JSON o la validación fallan.
-  - Validaciones aplicadas en la capa de negocio (`RocketService`):
-    - `name` es obligatorio y no puede estar vacío.
-    - `capacity` debe estar entre `1` y `10`.
-  - Ejemplo CURL:
-
-```bash
-curl -X POST http://localhost:8080/rockets \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Falcon","capacity":5,"speed":12345.67}'
-```
-
-- `GET /rockets` — devuelve la lista de todos los cohetes (200).
-- `GET /rockets/{id}` — devuelve el cohete con ese `id` (200) o `404 Not Found` si no existe.
-
-**Estructura de carpetas (resumen)**
-- `src/main/java` — Código principal
-  - `academy.aicode.astrobookings` — paquete raíz
-    - `AstrobookingsApplication.java` — clase `main` que arranca el servidor HTTP (puerto `8080`).
-    - `presentation` — handlers HTTP
-      - `BaseHandler.java` — utilidades comunes y manejo de respuestas (configura `ObjectMapper`).
-      - `RocketHandler.java` — handler para `/rockets` (soporta `GET` y `POST`).
-    - `business` — lógica de negocio
-      - `RocketService.java` — validaciones y coordinación con el repositorio.
-    - `persistence` — almacenamiento en memoria
-      - `RocketRepository.java` — repositorio en memoria que genera ids (`r0`, `r1`, ...).
-      - `models` — modelos de dominio
-        - `Rocket.java` — modelo `Rocket` (`id: String`, `name: String`, `capacity: int`, `speed: Double`).
-- `src/minimal/java` — ejemplo mínimo (`MinimalApp`) que muestra serialización con Jackson.
-- `src/test/java` — pruebas (JUnit 5).
-- `src/main/resources` — recursos; `application.properties` presente (actualmente sin configuración significativa).
-
-**Descripción breve de las clases clave**
-- `AstrobookingsApplication` — crea un `HttpServer` en el puerto `8080` y registra el contexto `/rockets`.
-- `RocketHandler` — procesa `POST` (creación) y `GET` (búsqueda/listado) del recurso `/rockets`.
-- `RocketService` — encapsula validaciones (nombre obligatorio, capacidad entre 1 y 10) y delega al repositorio.
-- `RocketRepository` — almacenamiento en memoria usando `HashMap`; asigna ids automáticos (`r0`, `r1`, ...).
-- `BaseHandler` — proporciona un `ObjectMapper` configurado con `JavaTimeModule` y utilidades para enviar respuestas JSON (`Content-Type: application/json`).
-- `MinimalApp` — ejemplo independiente para depuración/serialización con Jackson.
-
-**Notas técnicas y recomendaciones**
-- El `pom.xml` ya incluye configuración para ejecutar la aplicación con `exec:java` y para crear un JAR ejecutable (`maven-shade-plugin`) apuntando a la clase `AstrobookingsApplication`.
-- Si se desea persistencia real, sustituir `RocketRepository` por una implementación conectada a BD y ajustar `RocketService`.
-- Añadir pruebas de integración para el handler HTTP si se requiere mayor cobertura.
-
----
-Generado/actualizado para reflejar el estado actual del código fuente.
+> End of STRUCTURE document for AstroBookings, last updated on December 15, 2025.
