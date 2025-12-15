@@ -50,4 +50,6 @@ AstroBookings será un API para una aplicación de reservas para viajes espacial
 - Es una aplicación backend con API RESTful
   - Java, Spring Boot recomendado
   - Usar las mínimas dependencias posibles  
+- La cancelación se realiza de forma manual
+- Los pagos y notificaciones se simulan con logs
 
