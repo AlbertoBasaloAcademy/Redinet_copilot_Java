@@ -4,11 +4,12 @@ AstroBookings será un API para una aplicación de reservas para viajes espacial
 
 ## Funcionalidades clave
 
-- Listar y crear `Rocket` con validación
-- Listar `Flight` futuros (filtro estado)
+- Crear `Rocket` con validación
+- Listar todos o buscar `Rocket` por id
 - Crear `Flight` con fecha de lanzamiento futura y precio > 0 → `SCHEDULED`
-- Crear `Booking` con descuentos 
-- Consultar `Booking` por vuelo/pasajero
+- Listar `Flight` futuros (filtro estado)
+- Crear `Booking` con descuentos, al llegar al mínimo → `CONFIRMED` 
+- Consultar `Booking` por `Flight`
 - Cancelar `Flight` → `CANCELLED` 
 
 ### Entidades
@@ -17,12 +18,13 @@ AstroBookings será un API para una aplicación de reservas para viajes espacial
     - Nombre (obligatorio), 
     - Capacidad (máx. 10), 
     - Velocidad (opcional), 
-    - Alcance (opcional: LEO, MOON, MARS)
+    - Alcance (opcional: `LEO`, `MOON`, `MARS`)
 
 - `Flight`
     - Fecha de lanzamiento futura, 
-    - Precio base, Mínimo de pasajeros (5 default)
-    - Estados: `SCHEDULED`, `CONFIRMED`, `SOLD_OUT`, `CANCELLED` , `DONE` , ambio automático según reservas
+    - Precio base, 
+    - Mínimo de pasajeros (5 default)
+    - Estados: `SCHEDULED`, `CONFIRMED`, `SOLD_OUT`, `CANCELLED` , `DONE` , cambio automático según reservas
 
 - `Booking`
     - Pasajero (nombre, email),  
@@ -30,11 +32,11 @@ AstroBookings será un API para una aplicación de reservas para viajes espacial
 
 ### Lógica
 
-- Reservar solo si vuelo no lleno ni cancelado
-- No superar capacidad cohete → `SOLD_OUT` al límite
 - Alcanza mínimo pasajeros → `CONFIRMED` + notificar
+- No superar capacidad cohete → `SOLD_OUT` al límite
 - Falta 1 semana sin mínimo → `CANCELLED` + notificar + devolver pago
-- Completar vuelo → `DONE`
+- Reservar solo si vuelo no lleno `SOLD_OUT` ni cancelado `CANCELLED`
+- Realizar el vuelo → `DONE`
 
 - Descuentos (precedencia, solo uno)
     1. Última plaza → 0%
