@@ -1,3 +1,8 @@
+---
+description: 'Arquitectura en capas (n-tier) del proyecto'
+applyTo: '**/*.{java,md}'
+---
+
 # Arquitectura en capas
 
 Este proyecto sigue una arquitectura en capas, que separa las responsabilidades en diferentes niveles para mejorar la mantenibilidad y escalabilidad del código. A continuación se describen las capas principales:
