@@ -1,6 +1,6 @@
 ---
 agent: Plan
-model: GPT-5 mini (copilot)
+model: GPT-5.2 (Preview) (copilot)
 description: 'Write the code implementation plan for a feature based on its specification.'
 argument-hint: 'Provide the feature specification.'
 ---
@@ -30,15 +30,33 @@ Do not include any tests, only provide the code.
 - Plan the code structure and components needed to implement the feature.
 
 ### Coding steps
-- Commit and clean repository before starting the implementation. Create an isolated branch for the feature.
+- Create and use an isolated Git branch for the feature (MANDATORY).
+
+  - Ensure the working tree is clean before starting.
+  - Create a feature branch named using the spec id, for example:
+    - `feature/{specId}` (e.g. `feature/002-flight-management`)
+  - Switch to that branch before writing any code.
+  - If there are local, unrelated changes, do not proceed until the tree is clean.
 
 - Write the code implementation in appropriate files and directories following project conventions.
 
 - Don not wait for approval or feedback, proceed directly to implementation.
 
+- Commit work in Git (MANDATORY).
+
+  - After implementing the feature, create at least one commit with a descriptive Conventional Commit message, for example:
+    - `feat: implement {specId} flight management`
+  - Prefer small commits if it helps readability, but avoid excessive commit splitting.
+
 ### Post-coding steps
 
-- Update the [STRUCTURE.md](/docs/STRUCTURE.md) document if new dependencies or significant architectural changes are introduced.
+- Update documentation (MANDATORY).
+
+  - Update [STRUCTURE.md](/docs/STRUCTURE.md) to reflect what was implemented.
+  - Document:
+    - new HTTP contexts/endpoints added (e.g. `/flights`)
+    - new handlers/services/repositories/models created
+  - If no dependency changes were introduced, explicitly state “No dependency changes” in the relevant section/update note.
 
 - Commit the changes with a descriptive message indicating the feature implemented.
 
