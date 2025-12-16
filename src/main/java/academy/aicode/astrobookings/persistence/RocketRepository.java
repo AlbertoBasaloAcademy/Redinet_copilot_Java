@@ -2,6 +2,7 @@ package academy.aicode.astrobookings.persistence;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import academy.aicode.astrobookings.persistence.models.Rocket;
 
@@ -11,7 +12,6 @@ import academy.aicode.astrobookings.persistence.models.Rocket;
  */
 public class RocketRepository {
   private static final Map<String, Rocket> rockets = new HashMap<>();
-  private static int nextId = 0;
 
   /**
    * Guarda el cohete en memoria. Si `rocket.id` es null, se genera uno nuevo.
@@ -21,7 +21,7 @@ public class RocketRepository {
    */
   public Rocket save(Rocket rocket) {
     if (rocket.getId() == null) {
-      rocket.setId("r" + nextId++);
+      rocket.setId(UUID.randomUUID().toString());
     }
     rockets.put(rocket.getId(), rocket);
     return rocket;

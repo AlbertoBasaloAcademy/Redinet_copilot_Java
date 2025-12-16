@@ -1,34 +1,17 @@
-package academy.aicode.astrobookings.persistence.models;
+package academy.aicode.astrobookings.presentation.dto;
+
+import academy.aicode.astrobookings.persistence.models.Range;
 
 /**
- * Modelo simple que representa un cohete (Rocket) usado por la aplicación.
- * Contiene campos básicos: `id`, `name`, `capacity`, optional `range` y
- * `speed`.
+ * DTO para la creación de un Rocket via API.
  */
-public class Rocket {
-  private String id;
+public class CreateRocketRequest {
   private String name;
   private Integer capacity;
   private Range range;
   private Double speed;
 
-  public Rocket() {
-  }
-
-  public Rocket(String id, String name, Integer capacity, Range range, Double speed) {
-    this.id = id;
-    this.name = name;
-    this.capacity = capacity;
-    this.range = range;
-    this.speed = speed;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public void setId(String id) {
-    this.id = id;
+  public CreateRocketRequest() {
   }
 
   public String getName() {
