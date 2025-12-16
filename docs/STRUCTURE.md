@@ -31,20 +31,20 @@ src/main/java/academy/aicode/astrobookings/
 ├── presentation/                    # HTTP handlers for REST endpoints
 │   ├── BaseHandler.java            # Common handler functionality
 │   ├── RocketHandler.java          # Rocket CRUD operations
-│   ├── FlightHandler.java          # Flight management (to be implemented)
-│   └── BookingHandler.java         # Booking operations (to be implemented)
+│   ├── FlightHandler.java          # Flight management
+│   └── BookingHandler.java         # Booking operations
 ├── business/                        # Business logic and validation
 │   ├── RocketService.java          # Rocket business operations
-│   ├── FlightService.java          # Flight state management (to be implemented)
-│   └── BookingService.java         # Booking logic with discounts (to be implemented)
+│   ├── FlightService.java          # Flight state management
+│   └── BookingService.java         # Booking logic with discounts
 └── persistence/                     # Data access layer
     ├── RocketRepository.java       # In-memory rocket storage
-    ├── FlightRepository.java       # In-memory flight storage (to be implemented)
-    ├── BookingRepository.java      # In-memory booking storage (to be implemented)
+    ├── FlightRepository.java       # In-memory flight storage
+    ├── BookingRepository.java      # In-memory booking storage
     └── models/                      # Domain entities
         ├── Rocket.java             # Rocket entity
-        ├── Flight.java             # Flight entity (to be implemented)
-        └── Booking.java            # Booking entity (to be implemented)
+        ├── Flight.java             # Flight entity
+        └── Booking.java            # Booking entity
 ```
 
 ### Rocket Management
@@ -76,6 +76,38 @@ This project includes a simple Rocket Management feature implementing REST endpo
     - Error responses follow the structure: `{ "error":"...", "code":"...", "details": {"field":"...","message":"..."} }` and use appropriate HTTP statuses (400/404/405/201/200/500).
 
 - **Logging:** Uses `java.util.logging` for service and handler logging (no extra dependencies).
+
+### Flight Management
+
+This project includes a minimal Flight Management feature implementing REST endpoints and state derivation rules.
+
+- **Endpoints:**
+    - `POST /flights` — create a new flight (returns 201 and the created resource).
+    - `GET /flights` — list future flights (supports optional `state` query filter).
+    - `GET /flights/{id}` — fetch a flight by id (returns 200 or 404).
+
+- **Validation rules:**
+    - `rocketId` is required and must exist.
+    - `launchDateTime` is required and must be in the future.
+    - `basePrice` must be greater than 0.
+    - `minimumPassengers` must be between 1 and rocket capacity.
+
+### Booking Management
+
+This project includes an in-memory Booking Management feature implementing REST endpoints to create and retrieve bookings.
+
+- **Endpoints:**
+    - `POST /bookings` — create a booking (returns 201 and the created booking).
+    - `GET /bookings?flightId={flightId}` — list bookings for a given flight (returns 200 and an array).
+    - `GET /bookings/{id}` — fetch a booking by id (returns 200 or 404).
+
+- **Validation and rules:**
+    - `flightId`, `passengerName`, and `passengerDocument` are required and must be non-blank.
+    - Booking creation is rejected with 409 if the flight is `SOLD_OUT` or `CANCELLED`.
+    - Booking pricing is derived from flight `basePrice` with discount percent in `{0, 10, 30}`.
+    - Flight state is refreshed after creating a booking so that `CONFIRMED` and `SOLD_OUT` can be reached.
+
+- **No dependency changes.**
 
 ### Components diagram
 
@@ -127,4 +159,4 @@ mvn test
 - Documentation updates in /docs
 ```
 
-> End of STRUCTURE document for AstroBookings, last updated on December 15, 2025.
+> End of STRUCTURE document for AstroBookings, last updated on December 16, 2025.

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import academy.aicode.astrobookings.persistence.BookingRepository;
 import academy.aicode.astrobookings.persistence.FlightRepository;
 import academy.aicode.astrobookings.persistence.models.Flight;
 import academy.aicode.astrobookings.persistence.models.FlightState;
@@ -20,6 +21,7 @@ public class FlightService {
   private static final Logger LOGGER = Logger.getLogger(FlightService.class.getName());
 
   private final FlightRepository flightRepository = new FlightRepository();
+  private final BookingRepository bookingRepository = new BookingRepository();
   private final RocketService rocketService = new RocketService();
 
   /**
@@ -149,10 +151,42 @@ public class FlightService {
       return;
     }
 
-    // Booking-derived states (CONFIRMED/SOLD_OUT) will be added when Booking
-    // feature exists.
-    if (current == null) {
-      flight.setState(FlightState.SCHEDULED);
+    String rocketId = flight.getRocketId();
+    if (rocketId == null || rocketId.trim().isEmpty()) {
+      if (current != FlightState.SCHEDULED) {
+        flight.setState(FlightState.SCHEDULED);
+      }
+      return;
+    }
+
+    Rocket rocket = rocketService.findById(rocketId.trim());
+    Integer capacity = rocket == null ? null : rocket.getCapacity();
+    if (capacity == null || capacity < 1) {
+      if (current != FlightState.SCHEDULED) {
+        flight.setState(FlightState.SCHEDULED);
+      }
+      return;
+    }
+
+    int bookings = bookingRepository.countByFlightId(flight.getId());
+    FlightState desired;
+    if (bookings >= capacity.intValue()) {
+      desired = FlightState.SOLD_OUT;
+    } else if (flight.getMinimumPassengers() != null && bookings >= flight.getMinimumPassengers().intValue()) {
+      desired = FlightState.CONFIRMED;
+    } else {
+      desired = FlightState.SCHEDULED;
+    }
+
+    if (current != desired) {
+      flight.setState(desired);
+      LOGGER.log(Level.INFO, "Flight state changed to {0}: {1}", new Object[] { desired, flight.getId() });
+      if (desired == FlightState.CONFIRMED) {
+        LOGGER.log(Level.INFO, "Simulating payment capture and confirmation notification for flight: {0}",
+            flight.getId());
+      } else if (desired == FlightState.SOLD_OUT) {
+        LOGGER.log(Level.INFO, "Simulating SOLD_OUT notification for flight: {0}", flight.getId());
+      }
     }
   }
 }
