@@ -42,12 +42,6 @@ Do not include any tests, only provide the code.
 
 - Don not wait for approval or feedback, proceed directly to implementation.
 
-- Commit work in Git (MANDATORY).
-
-  - After implementing the feature, create at least one commit with a descriptive Conventional Commit message, for example:
-    - `feat: implement {specId} flight management`
-  - Prefer small commits if it helps readability, but avoid excessive commit splitting.
-
 ### Post-coding steps
 
 - Update documentation (MANDATORY).
@@ -58,12 +52,10 @@ Do not include any tests, only provide the code.
     - new handlers/services/repositories/models created
   - If no dependency changes were introduced, explicitly state “No dependency changes” in the relevant section/update note.
 
-- Commit the changes with a descriptive message indicating the feature implemented.
-
 ## Validation
 
 - Ensure the code implementation is complete and is syntactically correct
   - [ ] The code builds/compiles without errors
   - [ ] No tests are included, no need testing at this point  
   - [ ] Structure document is updated if necessary
-  - [ ] Feature branch is clean and ready for merging
+  - [ ] Commit changes and ensure the feature branch is clean and ready for merging
