@@ -128,6 +128,48 @@ public class FlightService {
   }
 
   /**
+   * Cancels an existing flight, setting its state to
+   * {@link FlightState#CANCELLED}.
+   * The operation is idempotent for already cancelled flights.
+   *
+   * @param id the flight id
+   * @return the updated flight, or null if not found
+   */
+  public Flight cancelById(String id) {
+    String trimmedId = id == null ? null : id.trim();
+    if (trimmedId == null || trimmedId.isEmpty()) {
+      throw new IllegalArgumentException("id must be provided");
+    }
+
+    Flight flight = flightRepository.findById(trimmedId);
+    if (flight == null) {
+      return null;
+    }
+
+    refreshStateOnRead(flight);
+
+    FlightState state = flight.getState();
+    if (state == FlightState.DONE) {
+      throw new IllegalStateException("flight is DONE and cannot be cancelled");
+    }
+
+    if (state == FlightState.CANCELLED) {
+      return flight;
+    }
+
+    flight.setState(FlightState.CANCELLED);
+    Flight saved = flightRepository.save(flight);
+
+    int bookings = bookingRepository.countByFlightId(saved.getId());
+    LOGGER.log(Level.INFO, "Flight cancelled: {0}", saved.getId());
+    LOGGER.log(Level.INFO, "Simulating cancellation notification for flight: {0}", saved.getId());
+    LOGGER.log(Level.INFO, "Simulating refunds for {0} bookings on flight: {1}",
+        new Object[] { bookings, saved.getId() });
+
+    return saved;
+  }
+
+  /**
    * Refreshes state derived from time and (future) bookings.
    *
    * @param flight the flight to refresh
