@@ -85,6 +85,7 @@ This project includes a minimal Flight Management feature implementing REST endp
     - `POST /flights` — create a new flight (returns 201 and the created resource).
     - `GET /flights` — list future flights (supports optional `state` query filter).
     - `GET /flights/{id}` — fetch a flight by id (returns 200 or 404).
+    - `POST /flights/{id}/cancel` — cancel a flight manually (returns 200, or 404/409).
 
 - **Validation rules:**
     - `rocketId` is required and must exist.
@@ -160,3 +161,5 @@ mvn test
 ```
 
 > End of STRUCTURE document for AstroBookings, last updated on December 16, 2025.
+
+Update note (December 16, 2025): Added manual flight cancellation endpoint `POST /flights/{id}/cancel`. No dependency changes.

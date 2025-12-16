@@ -52,8 +52,37 @@ public class FlightHandler extends BaseHandler {
     try {
       String relative = getRelativePath(exchange);
       if (relative != null && !relative.isEmpty() && !"/".equals(relative)) {
+        String trimmed = relative.startsWith("/") ? relative.substring(1) : relative;
+        String[] parts = trimmed.split("/");
+        if (parts.length == 2 && "cancel".equals(parts[1])) {
+          String id = parts[0] == null ? null : parts[0].trim();
+          if (id == null || id.isEmpty()) {
+            ErrorResponse er = new ErrorResponse("Invalid id", "INVALID_ID",
+                Map.of("field", "id", "message", "id must be provided"));
+            response = this.objectMapper.writeValueAsString(er);
+            statusCode = 400;
+            sendResponse(exchange, statusCode, response);
+            return;
+          }
+
+          Flight cancelled = flightService.cancelById(id);
+          if (cancelled == null) {
+            ErrorResponse er = new ErrorResponse("Flight not found", "NOT_FOUND",
+                Map.of("field", "id", "message", "no flight with given id"));
+            response = this.objectMapper.writeValueAsString(er);
+            statusCode = 404;
+            sendResponse(exchange, statusCode, response);
+            return;
+          }
+
+          response = this.objectMapper.writeValueAsString(toResponse(cancelled));
+          statusCode = 200;
+          sendResponse(exchange, statusCode, response);
+          return;
+        }
+
         ErrorResponse er = new ErrorResponse("Invalid path", "INVALID_PATH",
-            Map.of("field", "path", "message", "POST only supports /flights"));
+            Map.of("field", "path", "message", "POST supports /flights or /flights/{id}/cancel"));
         response = this.objectMapper.writeValueAsString(er);
         statusCode = 400;
         sendResponse(exchange, statusCode, response);
@@ -76,6 +105,11 @@ public class FlightHandler extends BaseHandler {
       ErrorResponse er = new ErrorResponse("Validation failed", "INVALID_INPUT", Map.of("message", iae.getMessage()));
       response = this.objectMapper.writeValueAsString(er);
       statusCode = 400;
+    } catch (IllegalStateException ise) {
+      LOGGER.log(Level.INFO, "Conflict in flight operation: {0}", ise.getMessage());
+      ErrorResponse er = new ErrorResponse("Conflict", "CONFLICT", Map.of("message", ise.getMessage()));
+      response = this.objectMapper.writeValueAsString(er);
+      statusCode = 409;
     } catch (JsonProcessingException jpe) {
       LOGGER.log(Level.INFO, "Invalid JSON in create flight request", jpe);
       ErrorResponse er = new ErrorResponse("Invalid JSON", "INVALID_JSON", Map.of("message", jpe.getMessage()));
