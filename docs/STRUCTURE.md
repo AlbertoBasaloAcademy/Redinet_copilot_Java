@@ -47,6 +47,36 @@ src/main/java/academy/aicode/astrobookings/
         └── Booking.java            # Booking entity (to be implemented)
 ```
 
+### Rocket Management
+
+This project includes a simple Rocket Management feature implementing REST endpoints and validation rules.
+
+- **Endpoints:**
+    - `POST /rockets` — create a new rocket (returns 201 and the created resource).
+    - `GET /rockets` — list rockets (supports optional `name` query filter).
+    - `GET /rockets/{id}` — fetch a rocket by id (returns 200 or 404).
+
+- **Validation rules:**
+    - `name` is required and must be non-blank.
+    - `capacity` is required and must be an integer between 1 and 10.
+    - `range` is optional and must be one of `LEO`, `MOON`, `MARS`.
+    - `speed` is optional (double).
+
+- **Data transfer objects (DTOs):**
+    - Request DTO: `src/main/java/academy/aicode/astrobookings/presentation/dto/CreateRocketRequest.java`
+    - Response DTO: `src/main/java/academy/aicode/astrobookings/presentation/dto/RocketResponse.java`
+    - Error schema: `src/main/java/academy/aicode/astrobookings/presentation/dto/ErrorResponse.java`
+
+- **Model and enums:**
+    - Domain model: `src/main/java/academy/aicode/astrobookings/persistence/models/Rocket.java` (now contains `Range range` and `Double speed`).
+    - Range enum: `src/main/java/academy/aicode/astrobookings/persistence/models/Range.java` (`LEO`, `MOON`, `MARS`).
+
+- **IDs and errors:**
+    - Rocket IDs are generated as UUID strings via `UUID.randomUUID().toString()`.
+    - Error responses follow the structure: `{ "error":"...", "code":"...", "details": {"field":"...","message":"..."} }` and use appropriate HTTP statuses (400/404/405/201/200/500).
+
+- **Logging:** Uses `java.util.logging` for service and handler logging (no extra dependencies).
+
 ### Components diagram
 
 ```mermaid
