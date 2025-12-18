@@ -229,7 +229,7 @@ class BookingHandlerTest {
     FlightService flightService = new FlightService();
     CreateFlightRequest flightRequest = new CreateFlightRequest();
     flightRequest.setRocketId(rocketId);
-    flightRequest.setLaunchDateTime(Instant.now().plusSeconds(3600));
+    flightRequest.setLaunchDateTime(Instant.now().plusSeconds(8 * 24 * 3600));
     flightRequest.setBasePrice(basePrice);
     flightRequest.setMinimumPassengers(minimumPassengers);
     return flightService.create(flightRequest);

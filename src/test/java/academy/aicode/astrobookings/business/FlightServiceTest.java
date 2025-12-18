@@ -185,7 +185,51 @@ class FlightServiceTest {
 
     flightService.refreshStateOnRead(flight);
 
+    assertEquals(FlightState.DONE, flight.getState());
+  }
+
+  @Test
+  void refreshStateOnRead_whenCancelledAndLaunchIsInFuture_doesNotChange() {
+    Flight flight = new Flight();
+    flight.setId("f-1");
+    flight.setRocketId("rocket-1");
+    flight.setLaunchDateTime(Instant.now().plusSeconds(3600));
+    flight.setState(FlightState.CANCELLED);
+
+    flightService.refreshStateOnRead(flight);
+
     assertEquals(FlightState.CANCELLED, flight.getState());
+  }
+
+  @Test
+  void refreshStateOnRead_whenWithin7DaysAndBelowMinimumPassengers_setsCancelled() {
+    Rocket rocket = seedRocket(5);
+    FlightRepository repo = new FlightRepository();
+
+    Flight flight = new Flight();
+    flight.setRocketId(rocket.getId());
+    flight.setLaunchDateTime(Instant.now().plusSeconds(6 * 24 * 3600));
+    flight.setBasePrice(1000.0);
+    flight.setMinimumPassengers(3);
+    flight.setState(FlightState.SCHEDULED);
+    Flight saved = repo.save(flight);
+
+    Flight found = flightService.findById(saved.getId());
+
+    assertNotNull(found);
+    assertEquals(FlightState.CANCELLED, found.getState());
+  }
+
+  @Test
+  void refreshStateOnRead_whenWithin7DaysButMeetsMinimumPassengers_doesNotCancel() {
+    Rocket rocket = seedRocket(5);
+    Flight flight = createFutureFlight(rocket.getId(), 1);
+
+    saveBookingForFlight(flight.getId());
+
+    flightService.refreshStateOnRead(flight);
+
+    assertEquals(FlightState.CONFIRMED, flight.getState());
   }
 
   @Test
