@@ -2,6 +2,7 @@ package academy.aicode.astrobookings.business;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -210,6 +211,51 @@ class FlightServiceTest {
     flightService.refreshStateOnRead(flight);
 
     assertEquals(FlightState.SOLD_OUT, flight.getState());
+  }
+
+  @Test
+  void cancelById_whenIdIsBlank_throwsIllegalArgumentException() {
+    IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> flightService.cancelById("   "));
+    assertTrue(ex.getMessage().contains("id must be provided"));
+  }
+
+  @Test
+  void cancelById_whenFlightDoesNotExist_returnsNull() {
+    Flight cancelled = flightService.cancelById("missing-id");
+    assertNull(cancelled);
+  }
+
+  @Test
+  void cancelById_whenFlightExistsAndNotDone_setsCancelled_andIsIdempotent() {
+    Rocket rocket = seedRocket(5);
+    Flight flight = createFutureFlight(rocket.getId(), 1);
+
+    Flight cancelled1 = flightService.cancelById(flight.getId());
+    Flight cancelled2 = flightService.cancelById(flight.getId());
+
+    assertNotNull(cancelled1);
+    assertEquals(flight.getId(), cancelled1.getId());
+    assertEquals(FlightState.CANCELLED, cancelled1.getState());
+    assertNotNull(cancelled2);
+    assertEquals(FlightState.CANCELLED, cancelled2.getState());
+
+    assertEquals(1, flightService.findFutureFlights(FlightState.CANCELLED).size());
+  }
+
+  @Test
+  void cancelById_whenFlightIsDone_throwsIllegalStateException() {
+    FlightRepository repo = new FlightRepository();
+    Flight flight = new Flight();
+    flight.setRocketId("rocket-1");
+    flight.setLaunchDateTime(Instant.now().minusSeconds(3600));
+    flight.setBasePrice(1000.0);
+    flight.setMinimumPassengers(1);
+    flight.setState(FlightState.SCHEDULED);
+
+    Flight saved = repo.save(flight);
+
+    IllegalStateException ex = assertThrows(IllegalStateException.class, () -> flightService.cancelById(saved.getId()));
+    assertTrue(ex.getMessage().contains("DONE"));
   }
 
   private static Rocket seedRocket(int capacity) {

@@ -223,6 +223,116 @@ class FlightHandlerTest {
     assertTrue(exchange.getResponseBodyAsString().contains("Method not allowed"));
   }
 
+  @Test
+  void postCancel_whenFlightExistsAndNotDone_returns200_withCancelledState() throws IOException {
+    Rocket rocket = seedRocket(10);
+
+    FlightService seed = new FlightService();
+    CreateFlightRequest req = new CreateFlightRequest();
+    req.setRocketId(rocket.getId());
+    req.setLaunchDateTime(Instant.parse("2099-01-15T10:00:00Z"));
+    req.setBasePrice(1000.0);
+    req.setMinimumPassengers(1);
+    Flight saved = seed.create(req);
+
+    FakeHttpExchange exchange = FakeHttpExchange.create("POST", URI.create("/flights/" + saved.getId() + "/cancel"),
+        "/flights", null);
+
+    handler.handle(exchange);
+
+    assertEquals(200, exchange.getStatusCode());
+    FlightResponse response = objectMapper.readValue(exchange.getResponseBodyAsString(), FlightResponse.class);
+    assertEquals(saved.getId(), response.getId());
+    assertEquals(FlightState.CANCELLED, response.getState());
+  }
+
+  @Test
+  void postCancel_whenFlightDoesNotExist_returns404_notFound() throws IOException {
+    FakeHttpExchange exchange = FakeHttpExchange.create("POST", URI.create("/flights/missing-id/cancel"), "/flights",
+        null);
+
+    handler.handle(exchange);
+
+    assertEquals(404, exchange.getStatusCode());
+    ErrorResponse response = objectMapper.readValue(exchange.getResponseBodyAsString(), ErrorResponse.class);
+    assertEquals("NOT_FOUND", response.getCode());
+  }
+
+  @Test
+  void postCancel_whenIdIsBlank_returns400_invalidId() throws IOException {
+    FakeHttpExchange exchange = FakeHttpExchange.create("POST", URI.create("/flights//cancel"), "/flights", null);
+
+    handler.handle(exchange);
+
+    assertEquals(400, exchange.getStatusCode());
+    ErrorResponse response = objectMapper.readValue(exchange.getResponseBodyAsString(), ErrorResponse.class);
+    assertEquals("INVALID_ID", response.getCode());
+  }
+
+  @Test
+  void postCancel_whenFlightIsDone_returns409_conflict() throws IOException {
+    Flight flight = new Flight();
+    flight.setRocketId("rocket-1");
+    flight.setLaunchDateTime(Instant.now().minusSeconds(3600));
+    flight.setBasePrice(1000.0);
+    flight.setMinimumPassengers(1);
+    flight.setState(FlightState.SCHEDULED);
+    Flight saved = new FlightRepository().save(flight);
+
+    FakeHttpExchange exchange = FakeHttpExchange.create("POST", URI.create("/flights/" + saved.getId() + "/cancel"),
+        "/flights", null);
+
+    handler.handle(exchange);
+
+    assertEquals(409, exchange.getStatusCode());
+    ErrorResponse response = objectMapper.readValue(exchange.getResponseBodyAsString(), ErrorResponse.class);
+    assertEquals("CONFLICT", response.getCode());
+  }
+
+  @Test
+  void get_whenFilteringByStateCancelled_returnsOnlyFutureCancelledFlights() throws IOException {
+    Rocket rocket = seedRocket(10);
+
+    FlightService seed = new FlightService();
+
+    CreateFlightRequest futureReq = new CreateFlightRequest();
+    futureReq.setRocketId(rocket.getId());
+    futureReq.setLaunchDateTime(Instant.now().plusSeconds(3600));
+    futureReq.setBasePrice(1000.0);
+    futureReq.setMinimumPassengers(1);
+    Flight future = seed.create(futureReq);
+    seed.cancelById(future.getId());
+
+    Flight pastCancelled = new Flight();
+    pastCancelled.setRocketId(rocket.getId());
+    pastCancelled.setLaunchDateTime(Instant.now().minusSeconds(3600));
+    pastCancelled.setBasePrice(1000.0);
+    pastCancelled.setMinimumPassengers(1);
+    pastCancelled.setState(FlightState.CANCELLED);
+    new FlightRepository().save(pastCancelled);
+
+    FakeHttpExchange exchange = FakeHttpExchange.create("GET", URI.create("/flights?state=CANCELLED"), "/flights",
+        null);
+    handler.handle(exchange);
+
+    assertEquals(200, exchange.getStatusCode());
+    FlightResponse[] responses = objectMapper.readValue(exchange.getResponseBodyAsString(), FlightResponse[].class);
+    assertEquals(1, responses.length);
+    assertEquals(future.getId(), responses[0].getId());
+    assertEquals(FlightState.CANCELLED, responses[0].getState());
+  }
+
+  @Test
+  void cancelEndpoint_whenMethodIsUnsupported_returns405() throws IOException {
+    FakeHttpExchange exchange = FakeHttpExchange.create("PUT", URI.create("/flights/some-id/cancel"), "/flights",
+        null);
+
+    handler.handle(exchange);
+
+    assertEquals(405, exchange.getStatusCode());
+    assertTrue(exchange.getResponseBodyAsString().contains("Method not allowed"));
+  }
+
   private static Rocket seedRocket(int capacity) {
     RocketService rocketService = new RocketService();
     CreateRocketRequest req = new CreateRocketRequest();
