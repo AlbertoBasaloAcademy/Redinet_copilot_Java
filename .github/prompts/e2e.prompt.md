@@ -1,0 +1,35 @@
+---
+agent: agent
+model: GPT-5.2 (copilot)
+description: 'Write the End to End testing code for a feature based on its specification.'
+argument-hint: 'Provide the feature specification.'
+---
+
+# Write E2E Tests for a Feature
+
+## Task
+
+Write the end to end testing code for a prompted feature based on its specification.
+
+## Context  
+
+- The specs file [{specId}.spec.md](/docs/specs/{specId}.spec.md)  
+- [STRUCTURE.md](/docs/STRUCTURE.md) - Contains the technology stack and approved dependencies
+
+## Steps
+
+- Read and analyze the specification document to understand the feature requirements.
+
+- Write a bash script with curl commands to simulate user interactions with the application, covering all critical user journeys as outlined in the specification.
+
+- Include log lines indicating PASS/FAIL for each test case based on expected outcomes.
+
+- Save the script at [/e2e/{specId}.e2e.sh](/e2e/{specId}.e2e.sh).
+
+## Validation
+- Review the e2e testing code to ensure it aligns with the specification
+- Ensure the testing code implementation is complete and is syntactically correct
+  - [ ] The code builds/compiles without errors
+  - [ ] Run the e2e script tests and verify they pass successfully
+  - [ ] If tests fail, debug and fix the issues; if get caught in a loop, STOP and ask for help;
+  - [ ] Stop or kill any running instances of the main program and tests after validation is complete
