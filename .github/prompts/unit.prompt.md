@@ -1,5 +1,5 @@
 ---
-agent: Plan
+agent: agent
 model: GPT-5.2 (copilot)
 description: 'Write the testing code for a feature based on its specification.'
 argument-hint: 'Provide the feature specification.'
