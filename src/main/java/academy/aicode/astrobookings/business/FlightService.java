@@ -179,10 +179,8 @@ public class FlightService {
       return;
     }
 
+    // Be careful with CANCELLED/DONE precedence: DONE takes precedence after launch
     FlightState current = flight.getState();
-    if (current == FlightState.CANCELLED) {
-      return;
-    }
 
     Instant launchDateTime = flight.getLaunchDateTime();
     if (launchDateTime != null && Instant.now().isAfter(launchDateTime)) {
@@ -190,6 +188,11 @@ public class FlightService {
         flight.setState(FlightState.DONE);
         LOGGER.log(Level.INFO, "Flight state changed to DONE: {0}", flight.getId());
       }
+      return;
+    }
+
+    // If already cancelled and not yet past launch, keep cancelled (do not reopen)
+    if (current == FlightState.CANCELLED) {
       return;
     }
 
@@ -211,6 +214,22 @@ public class FlightService {
     }
 
     int bookings = bookingRepository.countByFlightId(flight.getId());
+
+    // Rule-based cancellation: if within 7 days of launch and below minimum, cancel
+    if (launchDateTime != null && Instant.now().isAfter(launchDateTime.minusSeconds(7 * 24 * 3600))) {
+      Integer minimum = flight.getMinimumPassengers();
+      if (minimum != null && bookings < minimum.intValue()) {
+        if (current != FlightState.CANCELLED) {
+          flight.setState(FlightState.CANCELLED);
+          LOGGER.log(Level.INFO, "Flight state changed to CANCELLED (rule-based): {0}", flight.getId());
+          LOGGER.log(Level.INFO, "Simulating cancellation notification for flight: {0}", flight.getId());
+          LOGGER.log(Level.INFO, "Simulating refunds for {0} bookings on flight: {1}",
+              new Object[] { bookings, flight.getId() });
+        }
+        return;
+      }
+    }
+
     FlightState desired;
     if (bookings >= capacity.intValue()) {
       desired = FlightState.SOLD_OUT;

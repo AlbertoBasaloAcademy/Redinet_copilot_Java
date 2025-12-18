@@ -128,6 +128,28 @@ class BookingServiceTest {
   }
 
   @Test
+  void create_whenFlightIsRuleCancelledWithin7Days_throwsBookingConflictException() {
+    Rocket rocket = seedRocket(5);
+    FlightRepository flightRepository = new FlightRepository();
+
+    Flight nearLaunch = new Flight();
+    nearLaunch.setRocketId(rocket.getId());
+    nearLaunch.setLaunchDateTime(Instant.now().plusSeconds(6 * 24 * 3600));
+    nearLaunch.setBasePrice(1000.0);
+    nearLaunch.setMinimumPassengers(2);
+    nearLaunch.setState(FlightState.SCHEDULED);
+    Flight saved = flightRepository.save(nearLaunch);
+
+    CreateBookingRequest req = new CreateBookingRequest();
+    req.setFlightId(saved.getId());
+    req.setPassengerName("Ada");
+    req.setPassengerDocument("P123");
+
+    BookingConflictException ex = assertThrows(BookingConflictException.class, () -> bookingService.create(req));
+    assertTrue(ex.getMessage().contains("not eligible"));
+  }
+
+  @Test
   void create_whenRequestIsValid_generatesId_setsCreatedAt_andComputesFinalPriceAndDiscount() {
     Rocket rocket = seedRocket(5);
     Flight flight = createFutureFlight(rocket.getId(), 2, 1000.0);
@@ -232,7 +254,7 @@ class BookingServiceTest {
     FlightService flightService = new FlightService();
     CreateFlightRequest flightRequest = new CreateFlightRequest();
     flightRequest.setRocketId(rocketId);
-    flightRequest.setLaunchDateTime(Instant.now().plusSeconds(3600));
+    flightRequest.setLaunchDateTime(Instant.now().plusSeconds(8 * 24 * 3600));
     flightRequest.setBasePrice(basePrice);
     flightRequest.setMinimumPassengers(minimumPassengers);
     return flightService.create(flightRequest);
