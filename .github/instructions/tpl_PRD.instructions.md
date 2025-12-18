@@ -11,6 +11,7 @@ Product Requirements Document for { Product name }
 
 **{ Product name }** aims to { short Product description }.
 
+
 ### Goals
 
 - { Goal 1 short description }

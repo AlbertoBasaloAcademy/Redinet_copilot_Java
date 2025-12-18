@@ -28,9 +28,11 @@ Write the unit testing code for a prompted feature based on its specification.
 
 - DO NOT CHANGE WORKING CODE; only add new testing code.
 
+- Run the test suite at the end (do not skip tests).
+
 ## Validation
 
 - Ensure the testing code implementation is complete and is syntactically correct
   - [ ] The code builds/compiles without errors
-  - [ ] Run all tests and verify they pass successfully
+  - [ ] Run all tests (Maven): `./mvnw test` and verify they pass successfully
   - [ ] If tests fail, debug and fix the issues; if get caught in a loop, STOP and ask for help;
