@@ -163,3 +163,5 @@ mvn test
 > End of STRUCTURE document for AstroBookings, last updated on December 16, 2025.
 
 Update note (December 16, 2025): Added manual flight cancellation endpoint `POST /flights/{id}/cancel`. No dependency changes.
+ 
+Update note (December 18, 2025): Implemented automatic flight state derivation and booking discount logic (feature 005 - state & discount rules). No dependency changes.
