@@ -31,56 +31,85 @@ public class BookingService {
    * @return the created booking
    */
   public Booking create(CreateBookingRequest request) {
+    requireRequestBody(request);
+
+    String flightId = requireTrimmed(request.getFlightId(), "flightId must be provided");
+    String passengerName = requireTrimmed(request.getPassengerName(), "passengerName must be provided");
+    String passengerDocument = requireTrimmed(request.getPassengerDocument(), "passengerDocument must be provided");
+
+    Flight flight = requireExistingFlight(flightId);
+    requireEligibleFlightState(flight);
+
+    Rocket rocket = requireValidRocket(flight.getRocketId());
+    int capacity = rocket.getCapacity();
+
+    int currentBookings = bookingRepository.countByFlightId(flightId);
+    requireAvailableSeats(currentBookings, capacity);
+
+    int bookingNumber = currentBookings + 1;
+    int discountPercent = computeDiscountPercent(bookingNumber, capacity, flight.getMinimumPassengers());
+    double finalPrice = computeFinalPrice(flight.getBasePrice(), discountPercent);
+
+    Booking saved = bookingRepository
+        .save(buildBooking(flightId, passengerName, passengerDocument, discountPercent, finalPrice));
+    LOGGER.log(Level.INFO, "Booking created: {0}", saved.getId());
+
+    flightService.refreshStateOnRead(flight);
+    return saved;
+  }
+
+  private static void requireRequestBody(CreateBookingRequest request) {
     if (request == null) {
       throw new IllegalArgumentException("Request body must be provided");
     }
+  }
 
-    String flightId = request.getFlightId() == null ? null : request.getFlightId().trim();
-    if (flightId == null || flightId.isEmpty()) {
-      throw new IllegalArgumentException("flightId must be provided");
+  private static String requireTrimmed(String value, String message) {
+    String trimmed = value == null ? null : value.trim();
+    if (trimmed == null || trimmed.isEmpty()) {
+      throw new IllegalArgumentException(message);
     }
+    return trimmed;
+  }
 
-    String passengerName = request.getPassengerName() == null ? null : request.getPassengerName().trim();
-    if (passengerName == null || passengerName.isEmpty()) {
-      throw new IllegalArgumentException("passengerName must be provided");
-    }
-
-    String passengerDocument = request.getPassengerDocument() == null ? null : request.getPassengerDocument().trim();
-    if (passengerDocument == null || passengerDocument.isEmpty()) {
-      throw new IllegalArgumentException("passengerDocument must be provided");
-    }
-
+  private Flight requireExistingFlight(String flightId) {
     Flight flight = flightService.findById(flightId);
     if (flight == null) {
       throw new IllegalArgumentException("flightId does not exist");
     }
+    return flight;
+  }
 
+  private static void requireEligibleFlightState(Flight flight) {
     if (flight.getState() == FlightState.CANCELLED || flight.getState() == FlightState.SOLD_OUT) {
       throw new BookingConflictException("flight is not eligible for booking");
     }
+  }
 
-    Rocket rocket = rocketService.findById(flight.getRocketId());
+  private Rocket requireValidRocket(String rocketId) {
+    Rocket rocket = rocketService.findById(rocketId);
     if (rocket == null || rocket.getCapacity() == null || rocket.getCapacity() < 1) {
       throw new IllegalArgumentException("rocket capacity is invalid");
     }
+    return rocket;
+  }
 
-    int capacity = rocket.getCapacity();
-    int currentBookings = bookingRepository.countByFlightId(flightId);
-
+  private static void requireAvailableSeats(int currentBookings, int capacity) {
     if (currentBookings >= capacity) {
       throw new BookingConflictException("flight is sold out");
     }
+  }
 
-    int bookingNumber = currentBookings + 1;
-    int discountPercent = computeDiscountPercent(bookingNumber, capacity, flight.getMinimumPassengers());
-
-    Double basePrice = flight.getBasePrice();
+  private static double computeFinalPrice(Double basePrice, int discountPercent) {
     if (basePrice == null || !(basePrice > 0.0d)) {
       throw new IllegalArgumentException("flight basePrice is invalid");
     }
+    return basePrice.doubleValue() * (100.0d - discountPercent) / 100.0d;
+  }
 
-    double finalPrice = basePrice.doubleValue() * (100.0d - discountPercent) / 100.0d;
-
+  private static Booking buildBooking(String flightId, String passengerName, String passengerDocument,
+      int discountPercent,
+      double finalPrice) {
     Booking booking = new Booking();
     booking.setFlightId(flightId);
     booking.setPassengerName(passengerName);
@@ -88,12 +117,7 @@ public class BookingService {
     booking.setDiscountPercent(discountPercent);
     booking.setFinalPrice(finalPrice);
     booking.setCreatedAt(Instant.now());
-
-    Booking saved = bookingRepository.save(booking);
-    LOGGER.log(Level.INFO, "Booking created: {0}", saved.getId());
-
-    flightService.refreshStateOnRead(flight);
-    return saved;
+    return booking;
   }
 
   /**
